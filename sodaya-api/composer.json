@@ -55,6 +55,15 @@
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"
         ],
+        "lint": "pint --test",
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "contrato": "@php artisan scramble:export --path=openapi/v1.json",
+        "calidad": [
+            "@lint",
+            "@analyse",
+            "@contrato",
+            "@test"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

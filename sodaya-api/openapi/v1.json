@@ -1,0 +1,364 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "SodaYa",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api"
+        }
+    ],
+    "paths": {
+        "/v1/sodas/{soda}/platos": {
+            "get": {
+                "operationId": "v1.sodas.platos.index",
+                "summary": "Men\u00fa del d\u00eda de una soda: sus platos disponibles, paginados",
+                "tags": [
+                    "Plato"
+                ],
+                "parameters": [
+                    {
+                        "name": "soda",
+                        "in": "path",
+                        "required": true,
+                        "description": "The soda ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "fields[platos]",
+                        "in": "query",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "nombre",
+                                    "precio",
+                                    "moneda",
+                                    "minutos_preparacion",
+                                    "porciones_disponibles"
+                                ]
+                            }
+                        },
+                        "explode": false
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `PlatoResource`",
+                        "content": {
+                            "application/vnd.api+json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PlatoResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problema404"
+                    }
+                }
+            }
+        },
+        "/v1/sodas/{soda}/platos/{plato}": {
+            "get": {
+                "operationId": "v1.sodas.platos.show",
+                "summary": "Detalle de un plato disponible del men\u00fa de la soda",
+                "tags": [
+                    "Plato"
+                ],
+                "parameters": [
+                    {
+                        "name": "soda",
+                        "in": "path",
+                        "required": true,
+                        "description": "The soda ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "plato",
+                        "in": "path",
+                        "required": true,
+                        "description": "The plato ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "fields[platos]",
+                        "in": "query",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "nombre",
+                                    "precio",
+                                    "moneda",
+                                    "minutos_preparacion",
+                                    "porciones_disponibles"
+                                ]
+                            }
+                        },
+                        "explode": false
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PlatoResource`",
+                        "content": {
+                            "application/vnd.api+json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PlatoResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problema404"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "PlatoResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "platos"
+                    },
+                    "attributes": {
+                        "type": "object",
+                        "properties": {
+                            "nombre": {
+                                "type": "string"
+                            },
+                            "precio": {
+                                "type": "integer"
+                            },
+                            "moneda": {
+                                "type": "string",
+                                "const": "CRC"
+                            },
+                            "minutos_preparacion": {
+                                "type": "integer"
+                            },
+                            "porciones_disponibles": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "links": {
+                        "type": "object",
+                        "properties": {
+                            "self": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "self"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "type",
+                    "links"
+                ],
+                "title": "PlatoResource"
+            }
+        },
+        "responses": {
+            "Problema404": {
+                "description": "Problem details (RFC 9457). Valores posibles del final de \"type\": no-encontrado, pedido-no-encontrado.",
+                "content": {
+                    "application/problem+json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "description": "Identificador estable del problema; termina en su c\u00f3digo."
+                                },
+                                "title": {
+                                    "type": "string",
+                                    "description": "Resumen legible; no cambia entre ocurrencias."
+                                },
+                                "status": {
+                                    "type": "integer",
+                                    "description": "C\u00f3digo HTTP, repetido en el cuerpo."
+                                },
+                                "detail": {
+                                    "type": "string",
+                                    "description": "Explicaci\u00f3n de esta ocurrencia."
+                                },
+                                "instance": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "urn:uuid con el mismo valor del encabezado X-Request-Id."
+                                }
+                            },
+                            "required": [
+                                "type",
+                                "title",
+                                "status",
+                                "detail"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

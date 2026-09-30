@@ -18,6 +18,7 @@ Proyecto guía del curso ISW-621 (UTN): plataforma multi-inquilino donde varias 
 | [Dominio](docs/dominio.md) | Actores, casos de uso core y lenguaje ubicuo. |
 | [Contrato de endpoints](docs/contrato-de-endpoints.md) | Rutas, respuestas y clase en que se construye cada una. |
 | [Flujo de trabajo](CONTRIBUTING.md) | Ramas, commits, pull requests, etiquetas y tablero. |
+| [Despliegue](docs/despliegue.md) | Variables de entorno, pasos y verificación en producción. |
 
 ## Uso de asistentes de IA
 

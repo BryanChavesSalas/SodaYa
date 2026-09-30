@@ -2,6 +2,12 @@
 
 Proyecto guía del curso ISW-621 (UTN): plataforma multi-inquilino donde varias sodas publican su menú del día y reciben pedidos para llevar. API REST en Laravel 13 y PostgreSQL, cliente SPA en Vue 3 con TypeScript, cobro con Stripe, cocina en tiempo real, IA con datos validados, CI/CD y despliegue en producción.
 
+## Estructura
+
+| Carpeta | Contenido |
+|---|---|
+| [`sodaya-api/`](sodaya-api/README.md) | API REST en Laravel 13 sobre PostgreSQL 18. Instalación y pruebas en su README. |
+
 ## Recursos
 
 La API se diseña alrededor de los recursos del negocio, con el vocabulario de la clienta: en español, en plural y en `snake_case`.

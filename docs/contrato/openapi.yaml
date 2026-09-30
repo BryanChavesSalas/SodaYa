@@ -1,0 +1,499 @@
+openapi: 3.1.0
+info:
+  title: SodaYa API
+  version: 1.0.0-diseno
+  summary: Contrato de diseño de los casos de uso centrales de SodaYa.
+  description: |
+    Contrato escrito ANTES de programar. Cubre los casos de uso centrales:
+    ver el menú, ingresar, realizar un pedido, verlo, cancelarlo, pagarlo y que
+    la cocina lo avance. Los montos van en colones enteros (CRC), nunca con decimales.
+  contact:
+    name: Equipo SodaYa (ISW-621)
+  license:
+    name: Uso académico, UTN
+servers:
+  - url: http://localhost:4010
+    description: Servidor simulado (Prism) para el cliente, antes de que exista la API
+  - url: http://localhost:8000/api
+    description: API real en desarrollo (php artisan serve)
+tags:
+  - name: Menú
+    description: Lo que cualquier visitante puede ver.
+  - name: Sesión
+    description: Ingresar y recibir un token.
+  - name: Pedidos
+    description: Lo que hace el cliente con sus pedidos.
+  - name: Pagos
+    description: Cobro del pedido con Stripe.
+  - name: Cocina
+    description: Lo que hace el personal de la soda.
+
+paths:
+  /v1/sodas/{soda}/platos:
+    get:
+      tags: [Menú]
+      operationId: v1.sodas.platos.index
+      summary: Ver el menú del día de una soda
+      description: Caso de uso "Consultar el menú". Público, sin token.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Soda'
+      responses:
+        '200':
+          description: Platos disponibles hoy.
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Plato' }
+              examples:
+                menu:
+                  summary: Menú de La Esquina
+                  value:
+                    data:
+                      - id: '1'
+                        type: platos
+                        attributes: { nombre: Casado con pollo, precio: 2800, precio_vigente: 2800, moneda: CRC, minutos_preparacion: 15, porciones_disponibles: 12 }
+                        links: { self: http://localhost:8000/api/v1/sodas/1/platos/1, pedir: { href: http://localhost:8000/api/v1/sodas/1/pedidos, meta: { method: POST } } }
+                      - id: '2'
+                        type: platos
+                        attributes: { nombre: Gallo pinto con huevo, precio: 1800, precio_vigente: 1800, moneda: CRC, minutos_preparacion: 10, porciones_disponibles: 0 }
+                        links: { self: http://localhost:8000/api/v1/sodas/1/platos/2, pedir: { href: http://localhost:8000/api/v1/sodas/1/pedidos, meta: { method: POST } } }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /v1/tokens:
+    post:
+      tags: [Sesión]
+      operationId: v1.tokens.store
+      summary: Ingresar y recibir un token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credenciales' }
+            examples:
+              cliente:
+                value: { email: cliente@sodaya.test, password: password, dispositivo: web }
+      responses:
+        '201':
+          description: Token de 60 minutos con los permisos (abilities) del rol.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenEmitido' }
+              examples:
+                cliente:
+                  value: { token: 1|B4G7TFbXncKitgZpMxeMVBlfUA5wKUHl5JFFlwvA9407f285, tipo: Bearer, expira_en: '2026-10-19T19:00:00+00:00', rol: cliente, soda_id: null }
+        '422': { $ref: '#/components/responses/Validacion' }
+        '429': { $ref: '#/components/responses/DemasiadasSolicitudes' }
+
+  /v1/sodas/{soda}/pedidos:
+    post:
+      tags: [Pedidos]
+      operationId: v1.sodas.pedidos.store
+      summary: Realizar un pedido
+      description: |
+        Caso de uso central "Realizar un pedido". El cliente manda SOLO platos y cantidades:
+        el precio y el total los calcula el servidor con el menú.
+      parameters:
+        - $ref: '#/components/parameters/Soda'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NuevoPedido' }
+            examples:
+              dosCasados:
+                summary: Dos casados y un gallo pinto
+                value: { lineas: [ { plato_id: 1, cantidad: 2 }, { plato_id: 3, cantidad: 1 } ] }
+      responses:
+        '201':
+          description: Pedido creado en estado pendiente.
+          headers:
+            Location:
+              description: URL del pedido nuevo.
+              schema: { type: string, format: uri }
+              example: http://localhost:8000/api/v1/pedidos/01a0d57b-94c3-7344-bb39-1c859fd361c8
+          content:
+            application/vnd.api+json:
+              schema: { $ref: '#/components/schemas/RespuestaPedido' }
+              examples:
+                creado: { $ref: '#/components/examples/PedidoPendiente' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: Una regla del negocio impide el pedido.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              examples:
+                sodaCerrada:
+                  summary: Fuera del horario de la soda
+                  value: { type: https://api.sodaya.test/problemas/soda-cerrada, title: Soda cerrada, status: 409, detail: La soda no está atendiendo en este momento., instance: 'urn:uuid:01a0d57b-be3d-71ce-a87f-435b0292a7e7', soda_id: 1 }
+                platoNoDisponible:
+                  summary: El plato no está disponible hoy
+                  value: { type: https://api.sodaya.test/problemas/plato-no-disponible, title: Plato no disponible, status: 409, instance: 'urn:uuid:01a0d57b-be3d-71ce-a87f-435b0292a7e7' }
+                porcionesAgotadas:
+                  summary: No quedan porciones suficientes
+                  value: { type: https://api.sodaya.test/problemas/porciones-agotadas, title: Porciones agotadas, status: 409, detail: Solo quedan 0 porciones del plato 1., instance: 'urn:uuid:01a0d57b-be3d-71ce-a87f-435b0292a7e7', plato_id: 1, porciones_restantes: 0 }
+        '422':
+          description: Los datos no tienen la forma correcta, o un plato no es de esta soda.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              examples:
+                sinLineas:
+                  summary: Pedido vacío
+                  value: { type: https://api.sodaya.test/problemas/datos-invalidos, title: Datos inválidos, status: 422, detail: Uno o más campos no cumplen las reglas., instance: 'urn:uuid:01a0d57b-be3d-71ce-a87f-435b0292a7e7', errors: { lineas: [El campo lineas es obligatorio.] } }
+                platoDeOtraSoda:
+                  summary: El plato es de otra soda
+                  value: { type: https://api.sodaya.test/problemas/plato-no-pertenece-a-la-soda, title: Plato de otra soda, status: 422, instance: 'urn:uuid:01a0d57b-be3d-71ce-a87f-435b0292a7e7' }
+
+  /v1/pedidos/{pedido}:
+    get:
+      tags: [Pedidos]
+      operationId: v1.pedidos.show
+      summary: Ver mi pedido
+      description: Un pedido ajeno responde 404, no 403, para no confirmar que existe.
+      parameters:
+        - $ref: '#/components/parameters/Pedido'
+      responses:
+        '200':
+          description: El pedido, con los enlaces de lo que se puede hacer con él.
+          content:
+            application/vnd.api+json:
+              schema: { $ref: '#/components/schemas/RespuestaPedido' }
+              examples:
+                pendiente: { $ref: '#/components/examples/PedidoPendiente' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /v1/pedidos/{pedido}/cancelacion:
+    post:
+      tags: [Pedidos]
+      operationId: v1.pedidos.cancelacion
+      summary: Cancelar mi pedido
+      description: |
+        Una acción que no es CRUD se modela como un recurso nuevo (la cancelación)
+        que se crea con POST, en vez de inventar un verbo en la URL.
+      parameters:
+        - $ref: '#/components/parameters/Pedido'
+      responses:
+        '200':
+          description: Pedido cancelado. El enlace cancelar ahora es null.
+          content:
+            application/vnd.api+json:
+              schema: { $ref: '#/components/schemas/RespuestaPedido' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/TransicionNoPermitida' }
+
+  /v1/pedidos/{pedido}/pago:
+    post:
+      tags: [Pagos]
+      operationId: v1.pedidos.pago.store
+      summary: Iniciar el pago de mi pedido
+      description: El monto sale del pedido guardado. El navegador solo elige la propina.
+      parameters:
+        - $ref: '#/components/parameters/Pedido'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                propina: { type: integer, minimum: 0, maximum: 50000, description: Colones enteros. }
+      responses:
+        '201':
+          description: Cobro iniciado. client_secret se usa con Stripe.js en el navegador.
+          content:
+            application/vnd.api+json:
+              schema: { $ref: '#/components/schemas/RespuestaPago' }
+              examples:
+                iniciado:
+                  value:
+                    data: { id: '1', type: pagos, attributes: { estado: pendiente, monto: 7400, moneda: CRC, client_secret: pi_3SodaYa_secret_abc }, links: { pedido: http://localhost:8000/api/v1/pedidos/01a0d57b-94c3-7344-bb39-1c859fd361c8 } }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409':
+          description: El pedido ya está pagado.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '503':
+          description: El proveedor de pagos no respondió. El pedido sigue en pie.
+          headers:
+            Retry-After: { schema: { type: integer }, description: Segundos antes de reintentar. }
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+
+  /v1/cocina/pedidos/{pedido}/estado:
+    patch:
+      tags: [Cocina]
+      operationId: v1.cocina.pedidos.estado
+      summary: Avanzar un pedido de mi soda
+      description: Pendiente, confirmado, listo, entregado. Sin saltarse pasos ni devolverse.
+      parameters:
+        - $ref: '#/components/parameters/Pedido'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estado]
+              properties:
+                estado: { type: string, enum: [confirmado, listo, entregado] }
+            examples:
+              confirmar: { value: { estado: confirmado } }
+      responses:
+        '200':
+          description: El pedido con su estado nuevo.
+          content:
+            application/vnd.api+json:
+              schema: { $ref: '#/components/schemas/RespuestaPedido' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/TransicionNoPermitida' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Token de Sanctum que devuelve POST /v1/tokens.
+
+  parameters:
+    Soda:
+      name: soda
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+      example: 1
+    Pedido:
+      name: pedido
+      in: path
+      required: true
+      description: UUID v7 del pedido. No se puede adivinar sumando uno.
+      schema: { type: string, format: uuid }
+      example: 01a0d57b-94c3-7344-bb39-1c859fd361c8
+
+  schemas:
+    Colones:
+      type: integer
+      minimum: 0
+      description: Monto en colones enteros. Nunca decimales.
+    EnlaceDeAccion:
+      description: Enlace HATEOAS a una acción. Es null cuando la acción no está disponible.
+      oneOf:
+        - type: 'null'
+        - type: object
+          required: [href, meta]
+          properties:
+            href: { type: string, format: uri }
+            meta:
+              type: object
+              properties:
+                method: { type: string, enum: [GET, POST, PATCH, DELETE] }
+    Plato:
+      type: object
+      required: [id, type, attributes]
+      properties:
+        id: { type: string }
+        type: { const: platos }
+        attributes:
+          type: object
+          required: [nombre, precio, precio_vigente, moneda]
+          properties:
+            nombre: { type: string, maxLength: 120 }
+            precio: { $ref: '#/components/schemas/Colones' }
+            precio_vigente: { $ref: '#/components/schemas/Colones' }
+            moneda: { const: CRC }
+            minutos_preparacion: { type: integer, minimum: 1, maximum: 120 }
+            porciones_disponibles: { type: integer, minimum: 0 }
+        links:
+          type: object
+          properties:
+            self: { type: string, format: uri }
+            pedir: { $ref: '#/components/schemas/EnlaceDeAccion' }
+    Credenciales:
+      type: object
+      required: [email, password, dispositivo]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+        dispositivo: { type: string, maxLength: 60, description: 'Nombre del token: "web", "tableta de cocina".' }
+    TokenEmitido:
+      type: object
+      required: [token, tipo, expira_en, rol]
+      properties:
+        token: { type: string }
+        tipo: { const: Bearer }
+        expira_en: { type: string, format: date-time }
+        rol: { type: string, enum: [cliente, cocina, dueno] }
+        soda_id: { type: [integer, 'null'] }
+    NuevoPedido:
+      type: object
+      required: [lineas]
+      description: Sin precios ni total. Si el navegador los manda, el servidor los ignora (no los rechaza).
+      properties:
+        lineas:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items:
+            type: object
+            required: [plato_id, cantidad]
+            properties:
+              plato_id: { type: integer, minimum: 1 }
+              cantidad: { type: integer, minimum: 1, maximum: 20 }
+    EstadoPedido:
+      type: string
+      enum: [pendiente, confirmado, listo, entregado, cancelado]
+    LineaPedido:
+      type: object
+      required: [plato_id, nombre, precio_unitario, cantidad, subtotal]
+      properties:
+        plato_id: { type: integer }
+        nombre: { type: string, description: El nombre del plato cuando se pidió. }
+        precio_unitario: { $ref: '#/components/schemas/Colones' }
+        cantidad: { type: integer, minimum: 1, maximum: 20 }
+        subtotal: { $ref: '#/components/schemas/Colones' }
+    Pedido:
+      type: object
+      required: [id, type, attributes, links]
+      properties:
+        id: { type: string, format: uuid }
+        type: { const: pedidos }
+        attributes:
+          type: object
+          required: [estado, total, moneda, realizado_en, lineas]
+          properties:
+            estado: { $ref: '#/components/schemas/EstadoPedido' }
+            total: { $ref: '#/components/schemas/Colones' }
+            moneda: { const: CRC }
+            realizado_en: { type: string, format: date-time }
+            lineas:
+              type: array
+              items: { $ref: '#/components/schemas/LineaPedido' }
+        links:
+          type: object
+          required: [self, cancelar]
+          properties:
+            self: { type: string, format: uri }
+            menu: { type: string, format: uri }
+            cancelar: { $ref: '#/components/schemas/EnlaceDeAccion' }
+    RespuestaPedido:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: '#/components/schemas/Pedido' }
+    RespuestaPago:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [id, type, attributes]
+          properties:
+            id: { type: string }
+            type: { const: pagos }
+            attributes:
+              type: object
+              required: [estado, monto, moneda]
+              properties:
+                estado: { type: string, enum: [pendiente, requiere_accion, pagado, fallido] }
+                monto: { $ref: '#/components/schemas/Colones' }
+                moneda: { const: CRC }
+                client_secret: { type: string }
+            links:
+              type: object
+              properties:
+                pedido: { type: string, format: uri }
+    Problema:
+      type: object
+      description: Error en formato RFC 9457 (application/problem+json). Puede traer campos extra del caso, como plato_id.
+      required: [type, title, status]
+      additionalProperties: true
+      properties:
+        type: { type: string, format: uri, description: Identificador estable del error. El cliente decide con este campo. }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, description: Mismo valor que el encabezado X-Request-Id. }
+        errors:
+          type: object
+          description: Solo en el 422, un arreglo de mensajes por campo.
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+  examples:
+    PedidoPendiente:
+      summary: Pedido recién creado
+      value:
+        data:
+          id: 01a0d57b-94c3-7344-bb39-1c859fd361c8
+          type: pedidos
+          attributes:
+            estado: pendiente
+            total: 7400
+            moneda: CRC
+            realizado_en: '2026-10-19T18:14:01+00:00'
+            lineas:
+              - { plato_id: 1, nombre: Casado con pollo, precio_unitario: 2800, cantidad: 2, subtotal: 5600 }
+              - { plato_id: 3, nombre: Gallo pinto, precio_unitario: 1800, cantidad: 1, subtotal: 1800 }
+          links:
+            self: http://localhost:8000/api/v1/pedidos/01a0d57b-94c3-7344-bb39-1c859fd361c8
+            menu: http://localhost:8000/api/v1/sodas/1/platos
+            cancelar: { href: http://localhost:8000/api/v1/pedidos/01a0d57b-94c3-7344-bb39-1c859fd361c8/cancelacion, meta: { method: POST } }
+
+  responses:
+    NoAutenticado:
+      description: Falta el token o venció.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example: { type: https://api.sodaya.test/problemas/no-autenticado, title: No autenticado, status: 401, detail: Envíe un token válido en el encabezado Authorization., instance: 'urn:uuid:01a0d57b-be3d-71ce-a87f-435b0292a7e7' }
+    Prohibido:
+      description: El token no tiene el permiso (ability) que pide la ruta.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    NoEncontrado:
+      description: No existe, o no es suyo.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example: { type: https://api.sodaya.test/problemas/no-encontrado, title: Recurso no encontrado, status: 404, detail: El recurso solicitado no existe., instance: 'urn:uuid:01a0d57b-be3d-71ce-a87f-435b0292a7e7' }
+    TransicionNoPermitida:
+      description: El pedido ya avanzó y esa acción no aplica.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example: { type: https://api.sodaya.test/problemas/transicion-no-permitida, title: Cambio de estado no permitido, status: 409, detail: Un pedido listo no se puede cancelar., instance: 'urn:uuid:01a0d57b-be3d-71ce-a87f-435b0292a7e7' }
+    Validacion:
+      description: Los datos no tienen la forma correcta.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example: { type: https://api.sodaya.test/problemas/datos-invalidos, title: Datos inválidos, status: 422, detail: Uno o más campos no cumplen las reglas., instance: 'urn:uuid:01a0d57b-be3d-71ce-a87f-435b0292a7e7', errors: { lineas: [El campo lineas es obligatorio.] } }
+    DemasiadasSolicitudes:
+      description: Superó el límite de intentos.
+      headers:
+        Retry-After: { schema: { type: integer } }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+
+security:
+  - bearerAuth: []

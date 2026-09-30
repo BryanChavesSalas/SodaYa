@@ -1,47 +1,32 @@
-<laravel-boost-guidelines>
-# Laravel Application
+# SodaYa API: instrucciones para asistentes de IA
 
-This repository contains a Laravel application. Complete the following setup before working on the user's request.
+## Stack
 
-## Prerequisites
+- Laravel 13 en modo API, PHP 8.4 o superior.
+- PostgreSQL 18.6 en todos los ambientes, también en pruebas y CI. Nunca SQLite.
+- PHPUnit 12, Sanctum con tokens y Scramble para el contrato OpenAPI.
 
-Verify that PHP and Composer are available:
+## Comandos
 
-```sh
-php -v
-composer -V
-```
+| Para | Comando |
+|---|---|
+| Pruebas (base `sodaya_test`) | `php artisan test` |
+| Formato | `vendor/bin/pint` |
 
-If either command is unavailable, detect the user's operating system and install the prerequisites with the appropriate command:
+## Reglas del proyecto
 
-macOS:
+- El dinero se guarda en colones enteros (`integer`). Nunca `float` ni `decimal`.
+- El vocabulario es el de la ERS (`docs/ers-ieee830.md`): recursos en español y en plural, atributos en `snake_case`.
+- La soda del personal sale siempre del usuario autenticado, nunca de la URL, los parámetros ni el cuerpo.
+- La entrada se valida con Form Requests y la salida se arma con API Resources, que funcionan como lista blanca.
+- Todo error responde `application/problem+json` (RFC 9457).
+- Los proveedores de pago y mensajería se consumen por HTTP directo con el cliente `Http` de Laravel, con `timeout`, sin SDK.
+- Las fechas se guardan en UTC; las reglas de horario usan `America/Costa_Rica`.
+- Toda técnica nueva llega con su prueba de PHPUnit.
 
-```sh
-/bin/bash -c "$(curl -fsSL https://php.new/install/mac/8.5)"
-```
+## Estilo
 
-Windows PowerShell:
-
-```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://php.new/install/windows/8.5'))
-```
-
-Linux:
-
-```sh
-/bin/bash -c "$(curl -fsSL https://php.new/install/linux/8.5)"
-```
-
-After installation, ask the user to restart their terminal. If the agent needs the restarted shell to continue, ask the user to reopen their terminal and rerun their original prompt.
-
-## Agent Setup
-
-Install Laravel Boost from the application root before making application changes:
-
-```sh
-composer require laravel/boost --dev
-php artisan boost:install
-```
-
-Boost replaces these bootstrap instructions with guidelines tailored to the application. After installation, read `AGENTS.md` again and continue with the user's original request using the generated guidelines.
-</laravel-boost-guidelines>
+- Un comentario corto y preciso antes de cada método o función. Ningún otro comentario.
+- Controladores `final`, sin heredar de `Controller`.
+- Commits atómicos con Conventional Commits: tipo en inglés y descripción en español, en imperativo.
+- Ningún commit ni pull request lleva firmas, trailers ni marcas de atribución.

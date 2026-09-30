@@ -1,11 +1,12 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "bryanchavessalas/sodaya-api",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "API REST de SodaYa: menú del día y pedidos para llevar de varias sodas.",
     "keywords": [
-        "laravel",
-        "framework"
+        "sodaya",
+        "api",
+        "laravel"
     ],
     "license": "MIT",
     "require": {

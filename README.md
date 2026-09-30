@@ -7,6 +7,17 @@ Proyecto guía del curso ISW-621 (UTN): plataforma multi-inquilino donde varias 
 | Carpeta | Contenido |
 |---|---|
 | [`sodaya-api/`](sodaya-api/README.md) | API REST en Laravel 13 sobre PostgreSQL 18. Instalación y pruebas en su README. |
+| [`docs/`](docs) | Requisitos, dominio y contrato de la API. |
+
+## Documentación
+
+| Documento | Contenido |
+|---|---|
+| [ERS según IEEE 830](docs/ers-ieee830.md) | Requisitos funcionales y no funcionales. |
+| [Ficha de definición](docs/ficha-de-definicion.md) | Roles, extras y lo que SodaYa no hará. |
+| [Dominio](docs/dominio.md) | Actores, casos de uso core y lenguaje ubicuo. |
+| [Contrato de endpoints](docs/contrato-de-endpoints.md) | Rutas, respuestas y clase en que se construye cada una. |
+| [Flujo de trabajo](CONTRIBUTING.md) | Ramas, commits, pull requests, etiquetas y tablero. |
 
 ## Uso de asistentes de IA
 

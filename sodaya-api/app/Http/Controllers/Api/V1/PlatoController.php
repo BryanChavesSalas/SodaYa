@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Resources\V1\PlatoResource;
 use App\Models\Plato;
 use App\Models\Soda;
-use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 final class PlatoController
 {

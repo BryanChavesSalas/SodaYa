@@ -5,6 +5,7 @@ namespace Tests\Feature\Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use SodaYa\Compartido\Domain\ErrorDeDominio;
 use Tests\TestCase;
@@ -112,6 +113,46 @@ final class ProblemasTest extends TestCase
             ->assertTooManyRequests()
             ->assertHeader('Retry-After')
             ->assertJsonPath('type', self::TIPOS.'demasiadas-solicitudes');
+    }
+
+    /** Cada código HTTP del catálogo responde con su tipo genérico. */
+    #[Test]
+    #[DataProvider('codigosDelCatalogo')]
+    public function cada_codigo_http_del_catalogo_responde_su_tipo(int $estado, string $tipo): void
+    {
+        Route::get('/api/v1/prueba', fn () => abort($estado));
+
+        $this->getJson('/api/v1/prueba')
+            ->assertStatus($estado)
+            ->assertHeader('Content-Type', 'application/problem+json')
+            ->assertJsonPath('type', self::TIPOS.$tipo);
+    }
+
+    /**
+     * Códigos HTTP genéricos del catálogo de la ERS.
+     *
+     * @return array<string, array{int, string}>
+     */
+    public static function codigosDelCatalogo(): array
+    {
+        return [
+            '400' => [400, 'solicitud-invalida'],
+            '403' => [403, 'prohibido'],
+            '409' => [409, 'conflicto'],
+            '503' => [503, 'servicio-no-disponible'],
+        ];
+    }
+
+    /** Un código sin semántica propia responde about:blank con su texto estándar. */
+    #[Test]
+    public function un_codigo_sin_semantica_propia_responde_about_blank(): void
+    {
+        Route::get('/api/v1/prueba', fn () => abort(418));
+
+        $this->getJson('/api/v1/prueba')
+            ->assertStatus(418)
+            ->assertJsonPath('type', 'about:blank')
+            ->assertJsonPath('title', "I'm a teapot");
     }
 
     /** En producción un error interno no revela SQL, clases ni trazas. */

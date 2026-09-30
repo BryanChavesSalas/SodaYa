@@ -54,3 +54,18 @@ php artisan test
 ```
 
 Las pruebas corren contra la base `sodaya_test` de PostgreSQL, el mismo motor de producción. `phpunit.xml` fija esa base; el servidor, el puerto y el usuario salen de `.env`.
+
+## Revisión antes de cada pull request
+
+```sh
+composer calidad
+```
+
+Ejecuta, en este orden:
+
+| Paso | Comando | Qué revisa |
+|---|---|---|
+| Formato | `composer lint` | Pint con la configuración de `pint.json`, sin cambios pendientes. |
+| Análisis estático | `composer analyse` | Larastan en nivel 8, sin errores. |
+| Contrato | `composer contrato` | Exporta `openapi/v1.json`; si cambió, el cambio va en el pull request. |
+| Pruebas | `composer test` | PHPUnit contra PostgreSQL. |

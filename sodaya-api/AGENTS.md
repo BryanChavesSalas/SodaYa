@@ -10,9 +10,11 @@
 
 | Para | Comando |
 |---|---|
-| Pruebas (base `sodaya_test`) | `php artisan test` |
+| Revisión completa antes de un pull request | `composer calidad` |
+| Pruebas (base `sodaya_test`) | `composer test` |
 | Formato | `vendor/bin/pint` |
-| Contrato OpenAPI, después de cambiar la API | `php artisan scramble:export --path=openapi/v1.json` |
+| Análisis estático (Larastan, nivel 8) | `composer analyse` |
+| Contrato OpenAPI, después de cambiar la API | `composer contrato` |
 
 ## Reglas del proyecto
 

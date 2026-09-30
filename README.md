@@ -8,6 +8,16 @@ Proyecto guía del curso ISW-621 (UTN): plataforma multi-inquilino donde varias 
 |---|---|
 | [`sodaya-api/`](sodaya-api/README.md) | API REST en Laravel 13 sobre PostgreSQL 18. Instalación y pruebas en su README. |
 
+## Uso de asistentes de IA
+
+**Qué se genera con asistencia de IA.** El andamiaje, el código, las pruebas y la documentación pueden generarse con un asistente de IA. Las reglas que debe seguir están en [`sodaya-api/AGENTS.md`](sodaya-api/AGENTS.md).
+
+**Cómo se verifica.** Lo generado pasa por las mismas verificaciones que el código escrito a mano:
+
+- Pruebas de PHPUnit que cubren el cambio, corriendo contra PostgreSQL.
+- Formato con Pint y análisis estático con Larastan.
+- Revisión del pull request antes de integrarlo a `main`.
+
 ## Recursos
 
 La API se diseña alrededor de los recursos del negocio, con el vocabulario de la clienta: en español, en plural y en `snake_case`.

@@ -136,10 +136,10 @@ final class ProblemasTest extends TestCase
     public static function codigosDelCatalogo(): array
     {
         return [
-            '400' => [400, 'solicitud-invalida'],
-            '403' => [403, 'prohibido'],
-            '409' => [409, 'conflicto'],
-            '503' => [503, 'servicio-no-disponible'],
+            'solicitud inválida' => [400, 'solicitud-invalida'],
+            'acceso prohibido' => [403, 'prohibido'],
+            'conflicto' => [409, 'conflicto'],
+            'servicio no disponible' => [503, 'servicio-no-disponible'],
         ];
     }
 

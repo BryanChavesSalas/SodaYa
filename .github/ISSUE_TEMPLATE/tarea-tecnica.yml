@@ -1,0 +1,31 @@
+name: Tarea técnica
+description: Habilitador de arquitectura, calidad, seguridad u operación.
+labels: ["tipo: técnica"]
+body:
+  - type: textarea
+    id: historia
+    attributes:
+      label: Historia de usuario
+      description: Quién se beneficia y por qué, aunque sea el equipo de desarrollo.
+      placeholder: Como **equipo de desarrollo**, quiero **...**, para **...**.
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: detalles
+    attributes:
+      label: Detalles técnicos
+      value: |
+        - **Módulo:**
+        - **Clase:**
+        - **Requisitos (ERS):**
+        - **Depende de:**
+    validations:
+      required: true

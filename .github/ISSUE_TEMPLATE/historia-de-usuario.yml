@@ -1,0 +1,32 @@
+name: Historia de usuario
+description: Funcionalidad con valor para un actor del sistema.
+labels: ["tipo: historia"]
+body:
+  - type: textarea
+    id: historia
+    attributes:
+      label: Historia de usuario
+      description: Como actor, quiero una acción, para un beneficio.
+      placeholder: Como **cliente**, quiero **...**, para **...**.
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Verificables con una prueba. Use Dado / cuando / entonces cuando aplique.
+      value: |
+        - [ ] **Dado** ..., **cuando** ..., **entonces** ...
+    validations:
+      required: true
+  - type: textarea
+    id: detalles
+    attributes:
+      label: Detalles técnicos
+      value: |
+        - **Módulo:**
+        - **Clase:**
+        - **Requisitos (ERS):**
+        - **Depende de:**
+    validations:
+      required: true

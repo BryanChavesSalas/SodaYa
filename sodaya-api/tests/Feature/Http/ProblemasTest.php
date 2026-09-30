@@ -54,6 +54,17 @@ final class ProblemasTest extends TestCase
             ->assertJsonStructure(['errors' => ['nombre']]);
     }
 
+    /** Los mensajes de validación llegan en español, como promete el contrato. */
+    #[Test]
+    public function los_mensajes_de_validacion_llegan_en_espanol(): void
+    {
+        Route::post('/api/v1/prueba', fn (Request $request) => $request->validate(['lineas' => 'required']));
+
+        $this->postJson('/api/v1/prueba')
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.lineas.0', 'El campo lineas es obligatorio.');
+    }
+
     /** Una ruta protegida sin token responde 401 e indica el esquema Bearer. */
     #[Test]
     public function sin_token_responde_401_con_el_esquema_bearer(): void

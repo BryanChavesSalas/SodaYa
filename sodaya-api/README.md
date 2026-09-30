@@ -34,6 +34,19 @@ php artisan serve
 
 La API queda en `http://localhost:8000`, y `http://localhost:8000/up` responde 200 cuando la aplicación arrancó bien.
 
+## Contrato de la API
+
+Todas las rutas viven bajo `/api/v1`. Scramble genera el contrato OpenAPI 3.1 desde el código:
+
+- Documentación interactiva en `http://localhost:8000/docs/api`, solo en el ambiente local.
+- Contrato versionado en [`openapi/v1.json`](openapi/v1.json). Después de cambiar la API se exporta de nuevo, y una prueba falla si quedó desactualizado:
+
+```sh
+php artisan scramble:export --path=openapi/v1.json
+```
+
+Los errores responden `application/problem+json` (RFC 9457) y cada respuesta lleva el encabezado `X-Request-Id`.
+
 ## Pruebas
 
 ```sh
